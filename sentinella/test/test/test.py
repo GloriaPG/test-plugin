@@ -12,14 +12,30 @@ hostname = os.uname()[1].split('.')[0]
 @asyncio.coroutine
 def get_stats(agent):
     yield From(agent.run_event.wait())
-    config = agent.config['myplugin']
+    config = agent.config['test']
+    plugin_key = config['plugin_key']
     logger.info('starting "get_stats" task for "%s"', hostname)
 
     while agent.run_event.is_set():
         yield From(asyncio.sleep(frequency))
         try:
-            data = {'server_name': hostname,
-                    'measurements': []}
+            data = { "{}".format(plugin_key):{}}
+
+            data["{}".format(plugin_key)] = {
+                                                "size_data":{
+                                                    "value":100,
+                                                    "type":"integer"
+                                                },
+                                                "mysql_mem":{
+                                                    "value":2.5,
+                                                    "type":"float"
+                                                },
+                                                "mysql_performance":{
+                                                    "value":50,
+                                                    "type":"percent"
+                                                }
+                                            }
+                                            
             logger.debug('connecting to data source')
             
             # [START] To be completed with plugin code
@@ -44,7 +60,7 @@ def get_stats(agent):
             '''
             # [END] To be completed with plugin code
             
-            logger.debug('{}: myplugin={}%'.format(hostname, data))
+            logger.debug('{}: {}%'.format(hostname,data))
             yield From(agent.async_push(data))
         except:
             logger.exception('cannot get data source information')
