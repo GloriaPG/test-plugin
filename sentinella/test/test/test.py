@@ -14,13 +14,15 @@ hostname = os.uname()[1].split('.')[0]
 def get_stats(agent):
     yield From(agent.run_event.wait())
     config = agent.config['test']
+    plugin_key = config['plugin_key']
+    logger.info('plugin_key {}'.format(plugin_key))
     logger.info('starting "get_stats" task for "%s"', hostname)
 
     while agent.run_event.is_set():
         yield From(asyncio.sleep(frequency))
         try:
             data = {'server_name': hostname,
-                    'measurements': []}
+                    'plugins': {}}
             logger.debug('connecting to data source')
             
             # [START] To be completed with plugin code
@@ -29,18 +31,11 @@ def get_stats(agent):
             
             instance = ''
             value = ''
-            data['measurements'].append({'name': 'myplugin.cpu',
-                                         'tags': {'instance': instance},
-                                         'value': value})
-                                         
-            data['measurements'].append({'name': 'myplugin.mem',
-                                         'tags': {'instance': instance},
-                                         'value': value})
-                                         
-            data['measurements'].append({'name': 'myplugin.iops',
-                                         'tags': {'instance': instance},
-                                         'value': value})
-
+            data['plugins'].update({"{}".format(plugin_key):{}})
+            data['plugins'][plugin_key].update({"number_containers":{"value":3,"type":"integer"}})
+            data['plugins'][plugin_key].update({"memory_kubernates":{"value":1024,"type":"integer"}})
+            data['plugins'][plugin_key].update({"volumes":{"value":5,"type":"integer"}})
+                                               
 
             logger.debug('{}: myplugin={}%'.format(hostname, data))
             yield From(agent.async_push(data))

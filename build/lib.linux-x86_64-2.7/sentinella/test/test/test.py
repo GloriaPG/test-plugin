@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 
@@ -14,53 +15,29 @@ def get_stats(agent):
     yield From(agent.run_event.wait())
     config = agent.config['test']
     plugin_key = config['plugin_key']
+    logger.info('plugin_key {}'.format(plugin_key))
     logger.info('starting "get_stats" task for "%s"', hostname)
 
     while agent.run_event.is_set():
         yield From(asyncio.sleep(frequency))
         try:
-            data = { "{}".format(plugin_key):{}}
-
-            data["{}".format(plugin_key)] = {
-                                                "size_data":{
-                                                    "value":100,
-                                                    "type":"integer"
-                                                },
-                                                "mysql_mem":{
-                                                    "value":2.5,
-                                                    "type":"float"
-                                                },
-                                                "mysql_performance":{
-                                                    "value":50,
-                                                    "type":"percent"
-                                                }
-                                            }
-                                            
+            data = {'server_name': hostname,
+                    'plugins': {}}
             logger.debug('connecting to data source')
             
             # [START] To be completed with plugin code
             # Here goes your logic
-            '''
-            Example:
+        
             
             instance = ''
             value = ''
-            data['measurements'].append({'name': 'myplugin.cpu',
-                                         'tags': {'instance': instance},
-                                         'value': value})
-                                         
-            data['measurements'].append({'name': 'myplugin.mem',
-                                         'tags': {'instance': instance},
-                                         'value': value})
-                                         
-            data['measurements'].append({'name': 'myplugin.iops',
-                                         'tags': {'instance': instance},
-                                         'value': value})
+            data['plugins'].update({"{}".format(plugin_key):{}})
+            data['plugins'][plugin_key].update({"size_data":{"value":100,"type":"integer"}})
+            data['plugins'][plugin_key].update({"mem":{"value":3.5,"type":"float"}})
+            data['plugins'][plugin_key].update({"data":{"value":30,"type":"integer"}})
+                                               
 
-            '''
-            # [END] To be completed with plugin code
-            
-            logger.debug('{}: {}%'.format(hostname,data))
+            logger.debug('{}: myplugin={}%'.format(hostname, data))
             yield From(agent.async_push(data))
         except:
             logger.exception('cannot get data source information')
